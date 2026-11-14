@@ -32,6 +32,9 @@ function normalizeSiteUrl(value: string): string {
 }
 
 export function absoluteUrl(siteUrl: string, path: string): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
   return new URL(path.replace(/^\/+/, ""), normalizeSiteUrl(siteUrl)).toString();
 }
 
@@ -116,8 +119,10 @@ export function createPersonJsonLd(
 
 export interface BreadcrumbInputItem {
   label: string;
-  /** Путь на том же сайте, например `/ru/about/`. Последний элемент может быть без href. */
+  /** Путь на том же сайте, например `/ru/about/`, или полный URL. Последний элемент может быть без href/path. */
   path?: string;
+  href?: string;
+  item?: string;
 }
 
 export function createBreadcrumbJsonLd(
@@ -128,12 +133,26 @@ export function createBreadcrumbJsonLd(
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: item.label,
-      item: item.path ? absoluteUrl(siteUrl, item.path) : index === items.length - 1 ? currentPageUrl : undefined,
-    })),
+    itemListElement: items.map((item, index) => {
+      const rawTarget = item.path ?? item.href ?? item.item;
+      const targetUrl = rawTarget
+        ? absoluteUrl(siteUrl, rawTarget)
+        : index === items.length - 1
+          ? currentPageUrl
+          : undefined;
+
+      const element: Record<string, unknown> = {
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.label,
+      };
+
+      if (targetUrl) {
+        element.item = targetUrl;
+      }
+
+      return element;
+    }),
   };
 }
 

@@ -23,6 +23,29 @@ const copy = scienceCopy[locale];
 const { Content } = await render(entry);
 const publications = (await getCollection("publications", ({ data }) => data.publicationScope === "public"));
 const isHome = route === "home";
+const parentRoute = route.includes("/")
+  ? route.split("/").slice(0, -1).join("/")
+  : null;
+const allPages = await getCollection("pages");
+const parentEntry = parentRoute
+  ? allPages.find(
+      (page) => page.data.locale === locale && page.data.route === parentRoute,
+    )
+  : undefined;
+const navLabels = new Map<string, string>(
+  copy.nav.map((item: { href: string; label: string }) => [item.href, item.label]),
+);
+const breadcrumbs: { label: string; href?: string | undefined }[] = [];
+if (parentEntry) {
+  const parentPath = `/${locale}/${parentEntry.data.route}/`;
+  breadcrumbs.push({
+    label: navLabels.get(parentPath) ?? parentEntry.data.h1,
+    href: parentPath,
+  });
+}
+if (!isHome) {
+  breadcrumbs.push({ label: entry.data.h1 });
+}
 const currentPath = isHome ? `/${locale}/` : `/${locale}/${route}/`;
 const paths = {
   ru: isHome ? "/ru/" : `/ru/${route}/`,
@@ -168,7 +191,7 @@ const pageTitle = isHome
   locale={locale} theme="science" siteLabel={copy.siteLabel}
   title={pageTitle} description={entry.data.seoDescription}
   {paths} fallbackSiteUrl={scienceSiteConfig.fallbackUrl} navItems={copy.nav} {currentPath} {crossSite}
-  breadcrumbs={isHome ? undefined : [{ label: entry.data.h1 }]}
+  breadcrumbs={isHome ? undefined : breadcrumbs}
   personDetails={{ id: PERSON_CANONICAL_ID, email: publicContactEmail, jobTitle: nataliaProfile.scienceRole[locale] || nataliaProfile.scienceRole.en, alternateName: "Nataliia Ovchinnikova", knowsAbout: ["vocational education", "adult learning", "TVET educator training", "digital transformation in education", "technology transfer"], sameAs: sameAsLinks }}
   {jsonLd} footerText={copy.footer}
 >

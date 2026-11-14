@@ -50,6 +50,38 @@ for (const [site, siteRoutes] of Object.entries(routes)) {
         failures.push(`${site}/${locale}/${route || "home"}: missing footer cross-site link`);
       }
 
+      // Validate BreadcrumbList structured data if present
+      const jsonLdRegex = /<script\s+type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi;
+      let jsonLdMatch;
+      while ((jsonLdMatch = jsonLdRegex.exec(html)) !== null) {
+        try {
+          const parsed = JSON.parse(jsonLdMatch[1]);
+          if (parsed["@type"] === "BreadcrumbList") {
+            const list = parsed.itemListElement;
+            if (!Array.isArray(list) || list.length === 0) {
+              failures.push(`${site}/${locale}/${route || "home"}: BreadcrumbList itemListElement is empty or not an array`);
+            } else {
+              list.forEach((item, idx) => {
+                if (item["@type"] !== "ListItem") {
+                  failures.push(`${site}/${locale}/${route || "home"}: Breadcrumb item #${idx + 1} is not a ListItem`);
+                }
+                if (typeof item.position !== "number") {
+                  failures.push(`${site}/${locale}/${route || "home"}: Breadcrumb item #${idx + 1} missing numeric position`);
+                }
+                if (!item.name || typeof item.name !== "string") {
+                  failures.push(`${site}/${locale}/${route || "home"}: Breadcrumb item #${idx + 1} missing valid name`);
+                }
+                if (!item.item || typeof item.item !== "string" || !item.item.startsWith("http")) {
+                  failures.push(`${site}/${locale}/${route || "home"}: Breadcrumb item #${idx + 1} (${item.name || 'unnamed'}) missing valid item URL: ${item.item}`);
+                }
+              });
+            }
+          }
+        } catch (e) {
+          failures.push(`${site}/${locale}/${route || "home"}: malformed JSON-LD: ${e.message}`);
+        }
+      }
+
       const distDir = resolve(root, `apps/${site}/dist`);
       const linkRegex = /<a\s+[^>]*?href=["']([^"']+)["']/gi;
       let match;
