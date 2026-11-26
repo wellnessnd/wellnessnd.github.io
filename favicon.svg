@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Nataliia Dolgova — Wellness">
+  <defs>
+    <linearGradient id="warmBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCFAF7"/>
+      <stop offset="100%" stop-color="#F2ECE2"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#warmBg)" stroke="#E4D9CC" stroke-width="2"/>
+  <text x="32" y="42" font-family="'Fraunces', Georgia, 'Times New Roman', serif" font-weight="700" font-size="31" letter-spacing="1" fill="#964B28" text-anchor="middle">ND</text>
+  <circle cx="32" cy="51" r="2.5" fill="#C2885B"/>
+</svg>
